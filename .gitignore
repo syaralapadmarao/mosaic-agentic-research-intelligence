@@ -18,6 +18,10 @@ iteration1/data/parser_output_*.txt
 # Sample PDFs (too large for git)
 iteration1/sample_docs/
 
+# Node / Frontend
+node_modules/
+iteration1/frontend/dist/
+
 # macOS
 .DS_Store
 
