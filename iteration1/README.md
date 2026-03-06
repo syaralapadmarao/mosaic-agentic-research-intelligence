@@ -2,100 +2,6 @@
 
 A LangGraph pipeline that processes earnings call transcripts and investor presentations, extracting structured metrics and forward-looking guidance into a rolling 8-quarter dashboard.
 
-## Architecture
-
-### System Overview
-
-```mermaid
-flowchart TB
-    subgraph INPUT["📄 Input Layer"]
-        PDF["PDFs<br/><i>Presentations & Transcripts</i>"]
-    end
-
-    subgraph PIPELINE["⚙️ LangGraph Pipeline"]
-        PARSE["<b>parse_pdf</b><br/>PDF → page-tagged text<br/><code>[PAGE 1] ... [PAGE 2] ...</code>"]
-        CLASSIFY["<b>classify</b> <i>(LLM)</i><br/>→ doc_type, company, quarter<br/>→ route: presentation | transcript"]
-
-        subgraph WFA["Workflow A — Metrics (Presentations)"]
-            direction TB
-            EXTRACT_M["<b>extract_metrics</b> <i>(LLM)</i><br/>Schema-guided extraction<br/>with page + passage citations"]
-            CALC["<b>calculate_metrics</b> <i>(Code)</i><br/>Derived metrics from formulas<br/><i>e.g. EBITDA per Bed = EBITDA / Beds</i>"]
-            VALIDATE["<b>validate_metrics</b> <i>(LLM)</i><br/>Sanity checks, cross-reference<br/>flag suspicious values"]
-            ASSEMBLE_M["<b>assemble_table</b> <i>(Code)</i><br/>8-quarter rolling pivot table<br/>QoQ % change computation"]
-            EXTRACT_M --> CALC --> VALIDATE --> ASSEMBLE_M
-        end
-
-        subgraph WFB["Workflow B — Guidance (Transcripts)"]
-            direction TB
-            EXTRACT_G["<b>extract_guidance</b> <i>(LLM)</i><br/>Topics, statements, sentiment<br/>speaker attribution, timeframes"]
-            DELTA["<b>detect_deltas</b> <i>(LLM)</i><br/>Compare vs prior quarter<br/>new | upgraded | downgraded<br/>reiterated | removed"]
-            ASSEMBLE_G["<b>assemble_guidance</b> <i>(Code)</i><br/>Topic × quarter matrix<br/>lifecycle tags: NEW, STALE, DRIFT"]
-            EXTRACT_G --> DELTA --> ASSEMBLE_G
-        end
-    end
-
-    subgraph STORAGE["🗄️ SQLite (per company)"]
-        DB[("metrics · citations<br/>validations · guidance<br/>guidance_deltas · pdfs")]
-    end
-
-    subgraph API["🌐 FastAPI Backend"]
-        EP["/api/metrics/{co}<br/>/api/citations/{co}<br/>/api/guidance/{co}<br/>/api/deltas/{co}<br/>/api/pipeline/run<br/>/api/pdf/{co}/{path}"]
-    end
-
-    subgraph UI["💻 React Dashboard"]
-        direction LR
-        SIDEBAR["Sidebar<br/><i>Company list<br/>Schema picker</i>"]
-        METRICS["Metrics Tracker<br/><i>8Q table, QoQ colors<br/>Direct/Derived filter<br/>Citation links [p.N]</i>"]
-        GUIDANCE["Guidance Tracker<br/><i>Topic × Quarter matrix<br/>Sentiment arrows<br/>Delta timeline</i>"]
-        STATUS["Status Bar<br/><i>Run Pipeline<br/>Progress polling</i>"]
-    end
-
-    subgraph EVALS["🧪 Evaluation Framework"]
-        direction LR
-        CODE_EVAL["Code Evals (5)<br/><i>derived_metric_calc<br/>citation_accuracy<br/>citation_coverage<br/>rolling_window<br/>schema_compliance</i>"]
-        LLM_EVAL["LLM Judge Evals (5)<br/><i>taxonomy_quality<br/>guidance_completeness<br/>delta_accuracy<br/>taxonomy_evolution<br/>cross_quarter_quality</i>"]
-    end
-
-    PDF --> PARSE --> CLASSIFY
-    CLASSIFY -- "presentation" --> EXTRACT_M
-    CLASSIFY -- "transcript" --> EXTRACT_G
-    ASSEMBLE_M --> DB
-    ASSEMBLE_G --> DB
-    DB --> EP --> UI
-    DB --> EVALS
-
-    style INPUT fill:#1e293b,stroke:#3b82f6,color:#e2e8f0
-    style PIPELINE fill:#0f172a,stroke:#3b82f6,color:#e2e8f0
-    style WFA fill:#14532d,stroke:#22c55e,color:#e2e8f0
-    style WFB fill:#422006,stroke:#f59e0b,color:#e2e8f0
-    style STORAGE fill:#1e1b4b,stroke:#818cf8,color:#e2e8f0
-    style API fill:#172554,stroke:#3b82f6,color:#e2e8f0
-    style UI fill:#1e293b,stroke:#06b6d4,color:#e2e8f0
-    style EVALS fill:#2d1b0e,stroke:#f97316,color:#e2e8f0
-```
-
-### Data Flow Summary
-
-| Stage | Type | What Happens |
-|-------|------|--------------|
-| **Parse** | Code | PDF → page-tagged text with `[PAGE N]` markers |
-| **Classify** | LLM | Identifies doc type, company, period; routes to Workflow A or B |
-| **Extract** | LLM | Schema-guided metric extraction (A) or topic/sentiment guidance extraction (B) |
-| **Calculate** | Code | Derived metrics from formulas, propagating citations from inputs |
-| **Validate** | LLM | Cross-checks values, flags anomalies |
-| **Detect Deltas** | LLM | Compares guidance across quarters, classifies changes |
-| **Assemble** | Code | Persists to SQLite, builds rolling tables |
-
-### Citation Traceability
-
-Every extracted data point carries its **page number** and **source passage** from the original PDF. These flow through the entire pipeline:
-
-```
-PDF page 7 → LLM extracts "ARPOB = ₹78.0k" with page=7, passage="Overall ARPOB..."
-           → stored in citations table → served via /api/citations/{company}
-           → rendered as clickable [p.7] badge → opens /api/pdf/{company}/pres/file.pdf#page=7
-```
-
 ## Quick Start
 
 ### Prerequisites
@@ -214,3 +120,97 @@ sample_docs/
 ```
 
 PDFs are not checked into git due to size. Quarter is inferred from the filename (e.g., `Q1FY26`, `Q3_FY_25`).
+
+## Architecture
+
+### System Overview
+
+```mermaid
+flowchart TB
+    subgraph INPUT["📄 Input Layer"]
+        PDF["PDFs<br/><i>Presentations & Transcripts</i>"]
+    end
+
+    subgraph PIPELINE["⚙️ LangGraph Pipeline"]
+        PARSE["<b>parse_pdf</b><br/>PDF → page-tagged text<br/><code>[PAGE 1] ... [PAGE 2] ...</code>"]
+        CLASSIFY["<b>classify</b> <i>(LLM)</i><br/>→ doc_type, company, quarter<br/>→ route: presentation | transcript"]
+
+        subgraph WFA["Workflow A — Metrics (Presentations)"]
+            direction TB
+            EXTRACT_M["<b>extract_metrics</b> <i>(LLM)</i><br/>Schema-guided extraction<br/>with page + passage citations"]
+            CALC["<b>calculate_metrics</b> <i>(Code)</i><br/>Derived metrics from formulas<br/><i>e.g. EBITDA per Bed = EBITDA / Beds</i>"]
+            VALIDATE["<b>validate_metrics</b> <i>(LLM)</i><br/>Sanity checks, cross-reference<br/>flag suspicious values"]
+            ASSEMBLE_M["<b>assemble_table</b> <i>(Code)</i><br/>8-quarter rolling pivot table<br/>QoQ % change computation"]
+            EXTRACT_M --> CALC --> VALIDATE --> ASSEMBLE_M
+        end
+
+        subgraph WFB["Workflow B — Guidance (Transcripts)"]
+            direction TB
+            EXTRACT_G["<b>extract_guidance</b> <i>(LLM)</i><br/>Topics, statements, sentiment<br/>speaker attribution, timeframes"]
+            DELTA["<b>detect_deltas</b> <i>(LLM)</i><br/>Compare vs prior quarter<br/>new | upgraded | downgraded<br/>reiterated | removed"]
+            ASSEMBLE_G["<b>assemble_guidance</b> <i>(Code)</i><br/>Topic × quarter matrix<br/>lifecycle tags: NEW, STALE, DRIFT"]
+            EXTRACT_G --> DELTA --> ASSEMBLE_G
+        end
+    end
+
+    subgraph STORAGE["🗄️ SQLite (per company)"]
+        DB[("metrics · citations<br/>validations · guidance<br/>guidance_deltas · pdfs")]
+    end
+
+    subgraph API["🌐 FastAPI Backend"]
+        EP["/api/metrics/{co}<br/>/api/citations/{co}<br/>/api/guidance/{co}<br/>/api/deltas/{co}<br/>/api/pipeline/run<br/>/api/pdf/{co}/{path}"]
+    end
+
+    subgraph UI["💻 React Dashboard"]
+        direction LR
+        SIDEBAR["Sidebar<br/><i>Company list<br/>Schema picker</i>"]
+        METRICS["Metrics Tracker<br/><i>8Q table, QoQ colors<br/>Direct/Derived filter<br/>Citation links [p.N]</i>"]
+        GUIDANCE["Guidance Tracker<br/><i>Topic × Quarter matrix<br/>Sentiment arrows<br/>Delta timeline</i>"]
+        STATUS["Status Bar<br/><i>Run Pipeline<br/>Progress polling</i>"]
+    end
+
+    subgraph EVALS["🧪 Evaluation Framework"]
+        direction LR
+        CODE_EVAL["Code Evals (5)<br/><i>derived_metric_calc<br/>citation_accuracy<br/>citation_coverage<br/>rolling_window<br/>schema_compliance</i>"]
+        LLM_EVAL["LLM Judge Evals (5)<br/><i>taxonomy_quality<br/>guidance_completeness<br/>delta_accuracy<br/>taxonomy_evolution<br/>cross_quarter_quality</i>"]
+    end
+
+    PDF --> PARSE --> CLASSIFY
+    CLASSIFY -- "presentation" --> EXTRACT_M
+    CLASSIFY -- "transcript" --> EXTRACT_G
+    ASSEMBLE_M --> DB
+    ASSEMBLE_G --> DB
+    DB --> EP --> UI
+    DB --> EVALS
+
+    style INPUT fill:#1e293b,stroke:#3b82f6,color:#e2e8f0
+    style PIPELINE fill:#0f172a,stroke:#3b82f6,color:#e2e8f0
+    style WFA fill:#14532d,stroke:#22c55e,color:#e2e8f0
+    style WFB fill:#422006,stroke:#f59e0b,color:#e2e8f0
+    style STORAGE fill:#1e1b4b,stroke:#818cf8,color:#e2e8f0
+    style API fill:#172554,stroke:#3b82f6,color:#e2e8f0
+    style UI fill:#1e293b,stroke:#06b6d4,color:#e2e8f0
+    style EVALS fill:#2d1b0e,stroke:#f97316,color:#e2e8f0
+```
+
+### Data Flow Summary
+
+| Stage | Type | What Happens |
+|-------|------|--------------|
+| **Parse** | Code | PDF → page-tagged text with `[PAGE N]` markers |
+| **Classify** | LLM | Identifies doc type, company, period; routes to Workflow A or B |
+| **Extract** | LLM | Schema-guided metric extraction (A) or topic/sentiment guidance extraction (B) |
+| **Calculate** | Code | Derived metrics from formulas, propagating citations from inputs |
+| **Validate** | LLM | Cross-checks values, flags anomalies |
+| **Detect Deltas** | LLM | Compares guidance across quarters, classifies changes |
+| **Assemble** | Code | Persists to SQLite, builds rolling tables |
+
+### Citation Traceability
+
+Every extracted data point carries its **page number** and **source passage** from the original PDF. These flow through the entire pipeline:
+
+```
+PDF page 7 → LLM extracts "ARPOB = ₹78.0k" with page=7, passage="Overall ARPOB..."
+           → stored in citations table → served via /api/citations/{company}
+           → rendered as clickable [p.7] badge → opens /api/pdf/{company}/pres/file.pdf#page=7
+```
