@@ -1,0 +1,64 @@
+{
+  "company": "",
+  "ticker": "",
+  "sector": "Healthcare",
+  "currency": "INR",
+  "metrics": [
+    {
+      "name": "Revenue",
+      "type": "direct",
+      "unit": "INR Cr",
+      "aliases": ["Total Revenue", "Gross Revenue", "Revenue from Operations", "Net Revenue"]
+    },
+    {
+      "name": "EBITDA",
+      "type": "direct",
+      "unit": "INR Cr",
+      "aliases": ["Operating EBITDA", "EBITDA"]
+    },
+    {
+      "name": "Bed Capacity",
+      "type": "direct",
+      "unit": "Beds",
+      "aliases": ["Total Bed Count", "Total Beds", "Bed Capacity"]
+    },
+    {
+      "name": "Operational Beds",
+      "type": "direct",
+      "unit": "Beds",
+      "aliases": ["Operational Bed Capacity", "Operational Bed Count", "Operating Beds"]
+    },
+    {
+      "name": "Occupancy Rate",
+      "type": "direct",
+      "unit": "%",
+      "aliases": ["Occupancy", "Bed Occupancy Rate", "Occupancy %"],
+      "fallback_formula": "Occupied Bed Days / (Bed Capacity * 91) * 100",
+      "fallback_requires": ["Occupied Bed Days", "Bed Capacity"]
+    },
+    {
+      "name": "Occupied Bed Days",
+      "type": "direct",
+      "unit": "Days",
+      "aliases": ["OBD", "Patient Days", "Occupied Bed Days (OBD)"],
+      "fallback_formula": "Occupancy Rate / 100 * Operational Beds * 91",
+      "fallback_requires": ["Occupancy Rate", "Operational Beds"]
+    },
+    {
+      "name": "ARPOB",
+      "type": "direct",
+      "unit": "INR k",
+      "aliases": ["Average Revenue per Occupied Bed", "ARPOB (INR '000)", "ARPOB (INR K)"],
+      "fallback_formula": "Revenue * 10000 / Occupied Bed Days",
+      "fallback_requires": ["Revenue", "Occupied Bed Days"]
+    },
+    {
+      "name": "EBITDA per Bed",
+      "type": "direct",
+      "unit": "INR Lakhs",
+      "aliases": ["EBITDA per bed", "EBITDA/Bed"],
+      "fallback_formula": "EBITDA * 100 / Occupied Bed Days",
+      "fallback_requires": ["EBITDA", "Occupied Bed Days"]
+    }
+  ]
+}

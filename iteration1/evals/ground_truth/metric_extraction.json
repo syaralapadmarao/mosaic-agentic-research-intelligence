@@ -1,0 +1,22 @@
+{
+  "_description": "Ground truth for metric extraction eval. Manually verified values from source PDFs.",
+  "_instructions": "For each company+quarter, record the correct metric values, units, and page numbers as read from the PDF. Use null for metrics not present in the document.",
+  "examples": [
+    {
+      "company": "max",
+      "quarter": "Q1 FY26",
+      "schema_key": "hospital",
+      "pdf_path": "sample_docs/max/pres/Presentation_on_Earnings_Update_Q1_FY_26_55ea76372b.pdf",
+      "metrics": {
+        "Revenue": {"value": 2574, "unit": "INR Cr", "page": 6},
+        "EBITDA": {"value": 613, "unit": "INR Cr", "page": 6},
+        "Bed Capacity": {"value": null, "unit": "Beds", "page": null, "note": "TODO: verify from PDF"},
+        "Operational Beds": {"value": null, "unit": "Beds", "page": null, "note": "TODO: verify from PDF"},
+        "Occupancy Rate": {"value": null, "unit": "%", "page": null, "note": "TODO: verify from PDF"},
+        "Occupied Bed Days": {"value": null, "unit": "Days", "page": null, "note": "Not in PDF, calculated"},
+        "ARPOB": {"value": null, "unit": "INR k", "page": null, "note": "TODO: verify from PDF"},
+        "EBITDA per Bed": {"value": null, "unit": "INR Lakhs", "page": null, "note": "TODO: verify from PDF"}
+      }
+    }
+  ]
+}

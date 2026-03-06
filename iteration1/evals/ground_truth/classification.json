@@ -1,0 +1,36 @@
+{
+  "_description": "Ground truth for classification eval. Label each PDF with expected doc_type and route.",
+  "_instructions": "Fill in expected_doc_type and expected_route for each entry. Add more entries as needed.",
+  "examples": [
+    {
+      "pdf_path": "sample_docs/max/pres/Presentation_on_Earnings_Update_Q1_FY_26_55ea76372b.pdf",
+      "file_name": "Presentation_on_Earnings_Update_Q1_FY_26_55ea76372b.pdf",
+      "expected_doc_type": "investor_presentation",
+      "expected_route": "presentation"
+    },
+    {
+      "pdf_path": "sample_docs/max/pres/25_01_30_Q3_FY_25_EU_v_F_d69a9cd4bd.pdf",
+      "file_name": "25_01_30_Q3_FY_25_EU_v_F_d69a9cd4bd.pdf",
+      "expected_doc_type": "investor_presentation",
+      "expected_route": "presentation"
+    },
+    {
+      "pdf_path": "sample_docs/max/transcript/MHC_Q1_FY_26_Earnings_Call_Transcript_e769c534db.pdf",
+      "file_name": "MHC_Q1_FY_26_Earnings_Call_Transcript_e769c534db.pdf",
+      "expected_doc_type": "earnings_call",
+      "expected_route": "transcript"
+    },
+    {
+      "pdf_path": "sample_docs/apollo/Investor Presentation ahel-q2fy26-earnings-update.pdf",
+      "file_name": "Investor Presentation ahel-q2fy26-earnings-update.pdf",
+      "expected_doc_type": "investor_presentation",
+      "expected_route": "presentation"
+    },
+    {
+      "pdf_path": "sample_docs/apollo/Call Transcript - transcript-of-apollo-hospitals---q2-fy26-earnings-call---7-november-2025....pdf",
+      "file_name": "Call Transcript - transcript-of-apollo-hospitals---q2-fy26-earnings-call---7-november-2025....pdf",
+      "expected_doc_type": "earnings_call",
+      "expected_route": "transcript"
+    }
+  ]
+}
