@@ -13,6 +13,8 @@ Ground-truth-free evals (can run immediately): 3, 4, 5, 6, 7
 Ground-truth-required evals (need manual labels): 1, 2
 """
 
+import glob
+import os
 import re
 from typing import Optional
 
@@ -228,9 +230,15 @@ def citation_page_accuracy(citations: list[dict], pdf_base_dir: str = "") -> dic
 
         total += 1
 
-        if pdf_base_dir and not file_path.startswith("/"):
-            import os
-            file_path = os.path.join(pdf_base_dir, file_path)
+        if not os.path.isfile(file_path):
+            if pdf_base_dir and not file_path.startswith("/"):
+                file_path = os.path.join(pdf_base_dir, file_path)
+            if not os.path.isfile(file_path):
+                basename = os.path.basename(file_path)
+                base_search = pdf_base_dir or os.path.dirname(os.path.dirname(__file__))
+                matches = glob.glob(os.path.join(base_search, "**", basename), recursive=True)
+                if matches:
+                    file_path = matches[0]
 
         cache_key = file_path
         if cache_key not in pdf_cache:

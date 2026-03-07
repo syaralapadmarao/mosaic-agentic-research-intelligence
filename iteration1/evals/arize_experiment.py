@@ -12,7 +12,6 @@ Usage:
 import argparse
 import json
 import os
-import time
 from datetime import datetime, timezone
 from typing import Any
 
@@ -384,6 +383,88 @@ def delta_detection_evaluator(
     )
 
 
+def taxonomy_evolution_evaluator(
+    dataset_row: dict[str, Any], output: dict[str, Any]
+) -> EvaluationResult:
+    from iteration1.evals.llm_judge_evals import build_taxonomy_evolution_evaluator
+
+    guidance_table = json.loads(dataset_row.get("guidance_table_json", "{}"))
+    quarters = guidance_table.get("quarters", [])
+    topics = guidance_table.get("topics", {})
+
+    if len(quarters) < 2:
+        return EvaluationResult(score=0.0, label="SKIPPED", explanation="Need 2+ quarters")
+
+    prior_q, current_q = quarters[-2], quarters[-1]
+    prior_t = {t for t, qd in topics.items() if prior_q in qd}
+    curr_t = {t for t, qd in topics.items() if current_q in qd}
+
+    judge = build_taxonomy_evolution_evaluator(_get_eval_llm())
+    result = judge.evaluate({
+        "company": dataset_row["company"],
+        "prior_quarter": prior_q, "current_quarter": current_q,
+        "prior_topics": "\n".join(f"  - {t}" for t in sorted(prior_t)) or "(none)",
+        "current_topics": "\n".join(f"  - {t}" for t in sorted(curr_t)) or "(none)",
+        "new_topics": ", ".join(sorted(curr_t - prior_t)) or "(none)",
+        "dropped_topics": ", ".join(sorted(prior_t - curr_t)) or "(none)",
+    })
+    s = result[0]
+    return EvaluationResult(
+        score=float(s.score) if s.score is not None else 0.0,
+        label=s.label,
+        explanation=s.explanation,
+        metadata={"eval": "taxonomy_evolution"},
+    )
+
+
+def cross_quarter_evaluator(
+    dataset_row: dict[str, Any], output: dict[str, Any]
+) -> EvaluationResult:
+    from iteration1.evals.llm_judge_evals import build_cross_quarter_evaluator
+
+    guidance_table = json.loads(dataset_row.get("guidance_table_json", "{}"))
+    quarters = guidance_table.get("quarters", [])
+    topics = guidance_table.get("topics", {})
+
+    if len(quarters) < 2 or not topics:
+        return EvaluationResult(score=0.0, label="SKIPPED", explanation="Need 2+ quarters")
+
+    judge = build_cross_quarter_evaluator(_get_eval_llm())
+    scores = []
+
+    for topic, q_data in topics.items():
+        if sum(1 for q in quarters if q_data.get(q)) < 2:
+            continue
+        lines = []
+        for q in quarters:
+            items = q_data.get(q, [])
+            if items:
+                lines.append(f"  {q}: {'; '.join(g['statement'][:100] for g in items[:3])}")
+            else:
+                lines.append(f"  {q}: (not discussed)")
+
+        result = judge.evaluate({
+            "company": dataset_row["company"], "topic": topic,
+            "quarters_compared": ", ".join(quarters),
+            "guidance_by_quarter": "\n".join(lines),
+            "comparison_text": f"Topic '{topic}' across {len(quarters)} quarters.",
+        })
+        s = result[0]
+        if s.score is not None:
+            scores.append(float(s.score))
+
+    if not scores:
+        return EvaluationResult(score=0.0, label="SKIPPED", explanation="No multi-quarter topics")
+
+    avg = sum(scores) / len(scores)
+    return EvaluationResult(
+        score=avg,
+        label="GOOD" if avg >= 0.8 else "PARTIAL" if avg >= 0.4 else "BAD",
+        explanation=f"Avg {avg:.0%} across {len(scores)} topics",
+        metadata={"eval": "cross_quarter", "topic_count": len(scores)},
+    )
+
+
 # ---------------------------------------------------------------------------
 # Arize Experiment Orchestration
 # ---------------------------------------------------------------------------
@@ -461,6 +542,8 @@ def run_arize_experiment(
         "taxonomy_quality": taxonomy_quality_evaluator,
         "guidance_completeness": guidance_completeness_evaluator,
         "delta_detection": delta_detection_evaluator,
+        "taxonomy_evolution": taxonomy_evolution_evaluator,
+        "cross_quarter": cross_quarter_evaluator,
     }
 
     experiment, results_df = arize_client.experiments.run(
