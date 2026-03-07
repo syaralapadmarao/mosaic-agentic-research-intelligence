@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react';
 import { getMetrics, getCitations } from '../api';
 
 function fmt(v) {
-  if (v == null) return '—';
-  if (Math.abs(v) >= 10000) return v.toLocaleString('en-IN', { maximumFractionDigits: 0 });
+  if (v == null) return null;
+  if (Math.abs(v) >= 1_00_000) return v.toLocaleString('en-IN', { maximumFractionDigits: 0 });
   if (Math.abs(v) >= 100) return v.toLocaleString('en-IN', { maximumFractionDigits: 1 });
   return v.toFixed(1);
 }
@@ -29,16 +29,6 @@ function pdfUrl(company, filePath, page) {
   return `/api/pdf/${encodeURIComponent(company)}/${rel}#page=${page}`;
 }
 
-function QoQ({ val }) {
-  if (val == null) return null;
-  const color = val > 0 ? 'var(--green)' : val < 0 ? 'var(--red)' : 'var(--text-muted)';
-  return (
-    <div className="text-[10px] mt-0.5" style={{ color }}>
-      {val > 0 ? '+' : ''}{val.toFixed(1)}%
-    </div>
-  );
-}
-
 function Cites({ cites, company }) {
   if (!cites?.length) return null;
   const seen = new Set();
@@ -50,23 +40,20 @@ function Cites({ cites, company }) {
   });
 
   return (
-    <span className="cite-group">
-      {unique.map((c, i) => {
-        const url = pdfUrl(company, c.file_path, c.page_number);
-        return (
-          <a
-            key={i}
-            href={url}
-            target="_blank"
-            rel="noopener noreferrer"
-            title={c.passage || `Page ${c.page_number}`}
-            className="cite-link"
-          >
-            [p.{c.page_number}]
-          </a>
-        );
-      })}
-    </span>
+    <div className="cite-row">
+      {unique.map((c, i) => (
+        <a
+          key={i}
+          href={pdfUrl(company, c.file_path, c.page_number)}
+          target="_blank"
+          rel="noopener noreferrer"
+          title={c.passage || `Page ${c.page_number}`}
+          className="cite-link"
+        >
+          [p.{c.page_number}]
+        </a>
+      ))}
+    </div>
   );
 }
 
@@ -86,7 +73,7 @@ export default function MetricsTable({ company }) {
   }, [company]);
 
   if (!company) return <Empty msg="Select a company to view metrics" />;
-  if (loading) return <Empty msg="Loading…" />;
+  if (loading) return <Empty msg="Loading..." />;
   if (!data?.quarters?.length) return <Empty msg="No metrics data yet. Run the pipeline first." />;
 
   const { quarters, metrics } = data;
@@ -99,39 +86,41 @@ export default function MetricsTable({ company }) {
   return (
     <div>
       {/* Toolbar */}
-      <div className="flex items-center justify-between px-4 py-2 border-b"
+      <div className="flex items-center justify-between px-5 py-2.5 border-b"
         style={{ borderColor: 'var(--border)' }}>
         <div className="flex gap-1">
           {['all', 'direct', 'derived'].map(f => (
             <button key={f} onClick={() => setFilter(f)}
-              className="px-3 py-1 rounded text-[11px] font-medium uppercase tracking-wide transition-colors"
-              style={{
-                background: filter === f ? 'var(--bg-primary)' : 'transparent',
-                color: filter === f ? 'var(--text-primary)' : 'var(--text-muted)',
-              }}>
-              {f === 'derived' ? '⚙ Derived' : f === 'direct' ? 'Direct' : 'All'}
+              className={`filter-btn ${filter === f ? 'active' : 'inactive'}`}>
+              {f === 'derived' ? 'Derived (code)' : f === 'direct' ? 'Direct' : 'All'}
             </button>
           ))}
         </div>
-        <div className="flex items-center gap-3 text-[10px]" style={{ color: 'var(--text-muted)' }}>
-          <span><span style={{ color: 'var(--green)' }}>■</span> QoQ increase</span>
-          <span><span style={{ color: 'var(--red)' }}>■</span> QoQ decrease</span>
-          <span><span style={{ color: 'var(--text-muted)' }}>[p.N]</span> = open PDF page</span>
+        <div className="legend">
+          <span><span className="legend-dot" style={{ background: 'var(--green)' }} />QoQ increase</span>
+          <span><span className="legend-dot" style={{ background: 'var(--red)' }} />QoQ decrease</span>
+          <span><span className="cite-link" style={{ opacity: 1 }}>[p.N]</span> = click to open PDF</span>
         </div>
       </div>
 
       {/* Table */}
       <div className="overflow-x-auto">
-        <table className="w-full text-sm border-collapse">
+        <table className="w-full border-collapse" style={{ tableLayout: 'fixed' }}>
+          <colgroup>
+            <col style={{ width: 240 }} />
+            {quarters.map(q => (
+              <col key={q} style={{ width: 130 }} />
+            ))}
+          </colgroup>
           <thead>
             <tr>
-              <th className="text-left px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider sticky left-0 z-10"
-                style={{ background: 'var(--bg-secondary)', color: 'var(--text-muted)', minWidth: 210 }}>
+              <th className="text-left px-4 py-2 text-sm font-bold uppercase tracking-wider sticky left-0 z-10"
+                style={{ background: 'var(--bg-secondary)', color: 'var(--text-secondary)' }}>
                 Metric
               </th>
               {quarters.map(q => (
-                <th key={q} className="px-3 py-2.5 text-center text-[11px] font-semibold uppercase tracking-wider whitespace-nowrap"
-                  style={{ background: 'var(--bg-secondary)', color: 'var(--text-muted)', minWidth: 120 }}>
+                <th key={q} className="px-2 py-2 text-center text-sm font-bold uppercase tracking-wider whitespace-nowrap"
+                  style={{ background: 'var(--bg-secondary)', color: 'var(--text-secondary)' }}>
                   {q}
                 </th>
               ))}
@@ -139,42 +128,38 @@ export default function MetricsTable({ company }) {
           </thead>
           <tbody>
             {entries.map(([name, m], idx) => {
-              const bg = idx % 2 === 0 ? 'var(--bg-primary)' : 'rgba(26,29,39,0.5)';
+              const bg = idx % 2 === 0 ? 'var(--bg-row-even)' : 'var(--bg-row-odd)';
               const derived = isDerived(name);
               return (
-                <tr key={name} className="transition-colors" style={{ background: bg }}>
-                  <td className="px-4 py-2.5 sticky left-0 z-10" style={{ background: bg }}>
-                    <span className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>
-                      {name}
-                    </span>
-                    {m.unit && (
-                      <span className="text-[11px] ml-1.5" style={{ color: 'var(--text-muted)' }}>
-                        ({m.unit})
-                      </span>
-                    )}
-                    {derived && (
-                      <span className="text-[9px] ml-2 px-1.5 py-0.5 rounded font-semibold"
-                        style={{ background: 'rgba(59,130,246,0.15)', color: 'var(--accent)' }}>
-                        CODE
-                      </span>
-                    )}
+                <tr key={name} style={{ background: bg }}>
+                  <td className="px-4 py-1.5 sticky left-0 z-10" style={{ background: bg }}>
+                    <span className="metric-name">{name}</span>
+                    {m.unit && <span className="metric-unit">({m.unit})</span>}
+                    {derived && <span className="badge-derived">CODE</span>}
                   </td>
                   {quarters.map(q => {
                     const val = m.values[q];
+                    const formatted = fmt(val);
                     const change = m.changes?.[q];
                     const qCites = cites[q]?.[name] || [];
-                    const cellBorder = change != null
-                      ? change > 0 ? '2px solid rgba(34,197,94,0.3)' : change < 0 ? '2px solid rgba(239,68,68,0.3)' : 'none'
-                      : 'none';
+
+                    const qoqClass = change != null
+                      ? change > 0 ? 'up' : change < 0 ? 'down' : 'flat'
+                      : null;
+
                     return (
-                      <td key={q} className="px-3 py-2.5 text-center" style={{ borderBottom: cellBorder }}>
-                        <div className="cell-value">
-                          <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                            {fmt(val)}
+                      <td key={q} className="px-2 py-1.5 text-center">
+                        <div className="metric-cell">
+                          <span className={`metric-value${formatted == null ? ' empty' : ''}`}>
+                            {formatted ?? '—'}
                           </span>
+                          {qoqClass && (
+                            <span className={`metric-qoq ${qoqClass}`}>
+                              {change > 0 ? '+' : ''}{change.toFixed(1)}%
+                            </span>
+                          )}
                           <Cites cites={qCites} company={company} />
                         </div>
-                        <QoQ val={change} />
                       </td>
                     );
                   })}
@@ -191,7 +176,7 @@ export default function MetricsTable({ company }) {
 function Empty({ msg }) {
   return (
     <div className="flex items-center justify-center h-64" style={{ color: 'var(--text-muted)' }}>
-      <p className="text-sm italic">{msg}</p>
+      <p className="text-sm">{msg}</p>
     </div>
   );
 }

@@ -50,3 +50,7 @@ export async function runPipeline(company, schemaKey) {
 export async function getPipelineStatus(company) {
   return fetchJSON(`/pipeline/status/${encodeURIComponent(company)}`);
 }
+
+export async function getPipelineTrace(company) {
+  return fetchJSON(`/pipeline/trace/${encodeURIComponent(company)}`);
+}

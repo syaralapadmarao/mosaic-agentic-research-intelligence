@@ -2,11 +2,13 @@ import { useState, useCallback } from 'react';
 import Sidebar from './components/Sidebar';
 import MetricsTable from './components/MetricsTable';
 import GuidanceTracker from './components/GuidanceTracker';
-import StatusBar from './components/StatusBar';
+import PipelineTrace from './components/PipelineTrace';
+import PipelineControl from './components/PipelineControl';
 
 const TABS = [
-  { id: 'metrics', label: 'Tab 1: Metrics Tracker' },
-  { id: 'guidance', label: 'Tab 2: Guidance Tracker' },
+  { id: 'metrics', label: 'Metrics Tracker' },
+  { id: 'guidance', label: 'Guidance Tracker' },
+  { id: 'trace', label: 'Pipeline Trace' },
 ];
 
 export default function App() {
@@ -16,6 +18,11 @@ export default function App() {
   const [refreshKey, setRefreshKey] = useState(0);
 
   const handlePipelineComplete = useCallback(() => {
+    setRefreshKey(k => k + 1);
+  }, []);
+
+  const handlePipelineStart = useCallback(() => {
+    setActiveTab('trace');
     setRefreshKey(k => k + 1);
   }, []);
 
@@ -40,44 +47,54 @@ export default function App() {
                   {company || 'Select a company'}
                 </h2>
                 {company && (
-                  <span className="text-[10px] px-2 py-0.5 rounded font-medium uppercase"
-                    style={{ background: 'var(--bg-tertiary)', color: 'var(--text-muted)' }}>
+                  <span className="text-[10px] px-2 py-0.5 rounded font-medium uppercase tracking-wide"
+                    style={{ background: 'var(--bg-tertiary)', color: 'var(--text-muted)', border: '1px solid var(--border)' }}>
                     {schemaKey || 'no schema'}
                   </span>
                 )}
               </div>
               {company && (
-                <p className="text-[11px] mt-0.5" style={{ color: 'var(--text-muted)' }}>
-                  Rows = metrics from company schema · Columns = quarters ·
-                  Click any <span style={{ color: 'var(--accent)' }}>[p.XX]</span> to view source in PDF
+                <p className="text-[11px] mt-1" style={{ color: 'var(--text-muted)' }}>
+                  Rows = metrics from schema &middot; Columns = quarters &middot;
+                  Click <span style={{ color: 'var(--accent)' }}>[p.N]</span> to view source PDF
                 </p>
               )}
             </div>
 
-            {/* Tabs */}
-            <div className="flex items-center gap-0.5 p-0.5 rounded-lg"
-              style={{ background: 'var(--bg-tertiary)' }}>
-              {TABS.map(tab => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className="px-3 py-1.5 rounded-md text-xs font-medium transition-all"
-                  style={{
-                    background: activeTab === tab.id ? 'var(--bg-secondary)' : 'transparent',
-                    color: activeTab === tab.id ? 'var(--text-primary)' : 'var(--text-muted)',
-                    boxShadow: activeTab === tab.id ? '0 1px 3px rgba(0,0,0,0.3)' : 'none',
-                  }}
-                >
-                  {tab.label}
-                </button>
-              ))}
+            {/* Pipeline button + Tabs */}
+            <div className="flex items-center gap-4">
+              <PipelineControl
+                company={company}
+                schemaKey={schemaKey}
+                onPipelineComplete={handlePipelineComplete}
+                onPipelineStart={handlePipelineStart}
+              />
+
+              <div className="flex items-center gap-1 p-1 rounded-lg"
+                style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border)' }}>
+                {TABS.map((tab, i) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className="px-4 py-1.5 rounded-md text-xs font-medium transition-all"
+                    style={{
+                      background: activeTab === tab.id ? 'var(--bg-secondary)' : 'transparent',
+                      color: activeTab === tab.id ? 'var(--text-primary)' : 'var(--text-muted)',
+                      boxShadow: activeTab === tab.id ? '0 1px 4px rgba(0,0,0,0.4)' : 'none',
+                    }}
+                  >
+                    <span style={{ color: 'var(--text-muted)', marginRight: 4, fontSize: 10 }}>Tab {i + 1}:</span>
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </header>
 
         {/* Content */}
-        <main className="flex-1 overflow-auto p-4" style={{ background: 'var(--bg-primary)' }}>
-          <div className="rounded-lg border overflow-hidden"
+        <main className="flex-1 overflow-auto p-5" style={{ background: 'var(--bg-primary)' }}>
+          <div className="rounded-xl border overflow-hidden"
             style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border)' }}>
             {activeTab === 'metrics' && (
               <MetricsTable key={`m-${company}-${refreshKey}`} company={company} />
@@ -85,15 +102,11 @@ export default function App() {
             {activeTab === 'guidance' && (
               <GuidanceTracker key={`g-${company}-${refreshKey}`} company={company} />
             )}
+            {activeTab === 'trace' && (
+              <PipelineTrace key={`t-${company}-${refreshKey}`} company={company} />
+            )}
           </div>
         </main>
-
-        {/* Status bar */}
-        <StatusBar
-          company={company}
-          schemaKey={schemaKey}
-          onPipelineComplete={handlePipelineComplete}
-        />
       </div>
     </div>
   );

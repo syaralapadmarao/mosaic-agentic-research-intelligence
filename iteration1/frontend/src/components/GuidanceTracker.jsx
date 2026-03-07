@@ -119,13 +119,13 @@ function TrackerView({ quarters, topics, config, company }) {
       <table className="w-full text-sm border-collapse">
         <thead>
           <tr>
-            <th className="text-left px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider sticky left-0 z-10"
-              style={{ background: 'var(--bg-secondary)', color: 'var(--text-muted)', minWidth: 170 }}>
+            <th className="text-left px-4 py-2 text-sm font-bold uppercase tracking-wider sticky left-0 z-10"
+              style={{ background: 'var(--bg-secondary)', color: 'var(--text-secondary)', minWidth: 170 }}>
               Topic
             </th>
             {quarters.map(q => (
-              <th key={q} className="px-3 py-2.5 text-center text-[11px] font-semibold uppercase tracking-wider whitespace-nowrap"
-                style={{ background: 'var(--bg-secondary)', color: 'var(--text-muted)', minWidth: 200 }}>
+              <th key={q} className="px-3 py-2 text-center text-sm font-bold uppercase tracking-wider whitespace-nowrap"
+                style={{ background: 'var(--bg-secondary)', color: 'var(--text-secondary)', minWidth: 200 }}>
                 {q}
               </th>
             ))}
@@ -137,7 +137,7 @@ function TrackerView({ quarters, topics, config, company }) {
             const bg = idx % 2 === 0 ? 'var(--bg-primary)' : 'rgba(26,29,39,0.5)';
             return (
               <tr key={topic} style={{ background: bg }}>
-                <td className="px-4 py-2.5 align-top sticky left-0 z-10" style={{ background: bg }}>
+                <td className="px-4 py-1.5 align-top sticky left-0 z-10" style={{ background: bg }}>
                   <div className="flex items-center gap-1.5">
                     <span className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>{topic}</span>
                     {tag && (
@@ -152,7 +152,7 @@ function TrackerView({ quarters, topics, config, company }) {
                   const items = qData[q] || [];
                   if (!items.length) {
                     return (
-                      <td key={q} className="px-3 py-2.5 text-center align-top italic text-xs"
+                      <td key={q} className="px-3 py-1.5 text-center align-top italic text-xs"
                         style={{ color: 'var(--text-muted)' }}>
                         Not discussed
                       </td>
@@ -169,7 +169,7 @@ function TrackerView({ quarters, topics, config, company }) {
                     .filter(i => { const k = `${i.page_number}:${i.file_path}`; if (seen.has(k)) return false; seen.add(k); return true; });
 
                   return (
-                    <td key={q} className="px-3 py-2.5 align-top" style={{ maxWidth: 260 }}>
+                    <td key={q} className="px-3 py-1.5 align-top" style={{ maxWidth: 260 }}>
                       <div className="flex gap-2">
                         <span className="text-base font-bold shrink-0 leading-5" style={{ color }}>{arrow}</span>
                         <div className="min-w-0">
@@ -177,21 +177,16 @@ function TrackerView({ quarters, topics, config, company }) {
                             {summary}
                           </p>
                           {pageLinks.length > 0 && (
-                            <div className="flex flex-wrap gap-1 mt-1">
+                            <div className="cite-row" style={{ justifyContent: 'flex-start', marginTop: 3 }}>
                               {pageLinks.map((pl, i) => (
                                 <a key={i}
                                   href={pdfUrl(company, pl.file_path, pl.page_number)}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   title={pl.passage || `Page ${pl.page_number}`}
-                                  className="inline-block text-[10px] px-1.5 py-0.5 rounded transition-colors hover:opacity-80"
-                                  style={{
-                                    background: 'rgba(59,130,246,0.12)',
-                                    color: 'var(--accent)',
-                                    textDecoration: 'none',
-                                  }}
+                                  className="cite-link"
                                 >
-                                  p.{pl.page_number}
+                                  [p.{pl.page_number}]
                                 </a>
                               ))}
                             </div>
