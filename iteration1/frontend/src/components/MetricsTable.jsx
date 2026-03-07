@@ -50,7 +50,7 @@ function Cites({ cites, company }) {
   });
 
   return (
-    <div className="flex flex-wrap gap-1 mt-1">
+    <span className="cite-group">
       {unique.map((c, i) => {
         const url = pdfUrl(company, c.file_path, c.page_number);
         return (
@@ -60,19 +60,13 @@ function Cites({ cites, company }) {
             target="_blank"
             rel="noopener noreferrer"
             title={c.passage || `Page ${c.page_number}`}
-            className="inline-block text-[10px] px-1.5 py-0.5 rounded transition-colors hover:opacity-80"
-            style={{
-              background: 'rgba(59,130,246,0.12)',
-              color: 'var(--accent)',
-              textDecoration: 'none',
-              cursor: 'pointer',
-            }}
+            className="cite-link"
           >
-            p.{c.page_number}
+            [p.{c.page_number}]
           </a>
         );
       })}
-    </div>
+    </span>
   );
 }
 
@@ -122,7 +116,7 @@ export default function MetricsTable({ company }) {
         <div className="flex items-center gap-3 text-[10px]" style={{ color: 'var(--text-muted)' }}>
           <span><span style={{ color: 'var(--green)' }}>■</span> QoQ increase</span>
           <span><span style={{ color: 'var(--red)' }}>■</span> QoQ decrease</span>
-          <span><span style={{ color: 'var(--accent)' }}>p.N</span> = open PDF page</span>
+          <span><span style={{ color: 'var(--text-muted)' }}>[p.N]</span> = open PDF page</span>
         </div>
       </div>
 
@@ -174,11 +168,13 @@ export default function MetricsTable({ company }) {
                       : 'none';
                     return (
                       <td key={q} className="px-3 py-2.5 text-center" style={{ borderBottom: cellBorder }}>
-                        <div className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                          {fmt(val)}
+                        <div className="cell-value">
+                          <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                            {fmt(val)}
+                          </span>
+                          <Cites cites={qCites} company={company} />
                         </div>
                         <QoQ val={change} />
-                        <Cites cites={qCites} company={company} />
                       </td>
                     );
                   })}

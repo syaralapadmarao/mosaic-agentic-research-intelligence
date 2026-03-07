@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { runPipeline, getPipelineStatus } from '../api';
 
 export default function StatusBar({ company, schemaKey, onPipelineComplete }) {
@@ -6,6 +6,13 @@ export default function StatusBar({ company, schemaKey, onPipelineComplete }) {
   const [progress, setProgress] = useState('');
   const [error, setError] = useState('');
   const timer = useRef(null);
+
+  useEffect(() => {
+    if (timer.current) clearInterval(timer.current);
+    setRunning(false);
+    setProgress('');
+    setError('');
+  }, [company]);
 
   const execute = async () => {
     if (!company || !schemaKey) return;

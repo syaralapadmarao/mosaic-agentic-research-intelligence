@@ -1,0 +1,42 @@
+[
+  {
+    "text": "This document contains insider information about an upcoming acquisition that has not yet been announced to the public. The board has approved but not announced the deal.",
+    "expected_mnpi": true,
+    "file_name": "leaked_acquisition_memo.md"
+  },
+  {
+    "text": "CONFIDENTIAL - NOT FOR DISTRIBUTION. This memo contains unreleased earnings data for Q3 FY26 that is not yet public. Pre-announcement figures show revenue of 2900 Cr.",
+    "expected_mnpi": true,
+    "file_name": "pre_earnings_leak.md"
+  },
+  {
+    "text": "The proposed merger between Company A and Company B is a confidential deal that must not be disclosed until the official announcement.",
+    "expected_mnpi": true,
+    "file_name": "merger_confidential.md"
+  },
+  {
+    "text": "## Max Healthcare Ltd — Q2 FY26 Results Review\n\n**Motilal Oswal Financial Services**\n**Date:** 15 November 2025\n**Rating: BUY** | Target Price: ₹1,150\n\nMax Healthcare delivered strong Q2 FY26 results with revenue of ₹2,692 Cr.",
+    "expected_mnpi": false,
+    "file_name": "motilal_oswal_max_healthcare_Q2_FY26_BUY.md"
+  },
+  {
+    "text": "# NCR Hospital Pricing Trends - Channel Check\n\n**From:** Vikram Mehta, Healthcare Analyst | CLSA\n**Date:** 10 December 2025\n\nFollowing conversations with hospital administrators and insurance companies in the NCR region, key observations on pricing power.",
+    "expected_mnpi": false,
+    "file_name": "clsa_healthcare_channel_check_dec2025.md"
+  },
+  {
+    "text": "## Site Visit: Max Super Speciality Hospital, Saket\n\n**Date:** 20 October 2025\n**Visited by:** Rahul Desai, Senior Fund Manager\n\nKey Observations: Hospital occupancy remains strong at 78%. New oncology wing operational.",
+    "expected_mnpi": false,
+    "file_name": "max_saket_site_visit_oct2025.md"
+  },
+  {
+    "text": "The management disclosed in the quarterly earnings call that they plan to add 1,000 beds over the next three years.",
+    "expected_mnpi": false,
+    "file_name": "max_q2_fy26_transcript.pdf"
+  },
+  {
+    "text": "Do not distribute this report externally. Contains non-public price-sensitive information about the unannounced fundraise.",
+    "expected_mnpi": true,
+    "file_name": "restricted_fundraise_memo.md"
+  }
+]

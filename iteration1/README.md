@@ -21,7 +21,7 @@ pip install fastapi uvicorn langchain langchain-openai langchain-community pypdf
 
 # Start the API server
 cd mosaic-agentic-research-intelligence
-python -m uvicorn iteration1.api:app --host 127.0.0.1 --port 8000 --reload
+python -m uvicorn iteration1.api:app --host 127.0.0.1 --port 8001 --reload
 ```
 
 ### 2. Frontend

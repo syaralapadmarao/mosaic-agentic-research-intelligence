@@ -39,6 +39,33 @@ body {
 table { border-spacing: 0; }
 th, td { border-bottom: 1px solid var(--border); }
 
+.cell-value {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 4px;
+  flex-wrap: nowrap;
+}
+
+.cite-group {
+  display: inline-flex;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.cite-link {
+  font-size: 10px;
+  color: var(--text-muted);
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.15s;
+  white-space: nowrap;
+}
+
+.cite-link:hover {
+  color: var(--accent);
+}
+
 .animate-spin {
   animation: spin 0.8s linear infinite;
 }
